@@ -1,0 +1,398 @@
+//
+//  FBHelper.m
+//  ModelAlliance
+//
+//  Created by Alexey Romanko on 21.01.15.
+//  Copyright (c) 2015 Mac. All rights reserved.
+//
+
+#import "FBHelper.h"
+#import "UIViewController+Localization.h"
+#import "EULAVC.h"
+#import "LibraryAPI.h"
+
+#import <FBSDKShareKit/FBSDKShareKit.h>
+#import <FBSDKLoginKit/FBSDKLoginKit.h>
+#import <FBSDKCoreKit/FBSDKCoreKit.h>
+
+
+@implementation FBHelper
+
+static FBHelper* _FBHelperSingleton = nil;
+
++ (FBHelper*)FBHelperSingleton
+{
+    @synchronized([FBHelper class])
+    {
+        if (!_FBHelperSingleton)
+        {
+            _FBHelperSingleton = [[self alloc] init];
+        }
+        return _FBHelperSingleton;
+    }
+    return nil;
+}
+
++ (id)alloc {
+    @synchronized([FBHelper class])
+    {
+        NSAssert(_FBHelperSingleton == nil, @"Attempted to allocate a second instance of a singleton.");
+        _FBHelperSingleton = [super alloc];
+        return _FBHelperSingleton;
+    }
+    return nil;
+}
+
+- (void)fb_login:(void (^)  (BOOL isSuccess))handler {
+<<<<<<< HEAD
+    NSArray *permissionsArray = @[@"user_about_me", @"user_birthday", @"email"];
+    FBSDKLoginManager *login = [[FBSDKLoginManager alloc] init];
+    [login logInWithReadPermissions: permissionsArray
+                            handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+
+         if (error) {
+             NSLog(@"Process error");
+         } else if (result.isCancelled) {
+             NSLog(@"Cancelled ===== ");
+         } else {
+             if ([FBSDKAccessToken currentAccessToken]) {
+                 __block FBSDKAccessToken *token = result.token;
+                 [[[FBSDKGraphRequest alloc] initWithGraphPath:@"me" parameters:nil]
+                  startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
+                      if (!error) {
+                          NSDictionary *params = @{@"user":@{@"email":result[@"email"] ? result[@"email"] : @"", @"social":@{@"user_social_id":token.userID, @"token":token.tokenString, @"expiration":token.expirationDate, @"social_title":@"facebook"}}};
+                          [[LibraryAPI sharedinstance] loginSocial:params withHandler:^(UserData *user, NSError *error) {
+                              if (error) {
+                                  handler(NO);
+                                  return;
+                              }
+                              SHARED_CONTROLLER.userData = user;
+                              BOOL isReg = NO;
+                              if (!user) {
+                                  NSString *errorMessage = nil;
+                                  if (!error) {
+                                      NSLog(@"Uh oh. The user cancelled the Facebook login.");
+                                      errorMessage = @"Uh oh. The user cancelled the Facebook login.";
+                                  } else {
+                                      NSLog(@"Uh oh. An error occurred: %@", error);
+                                      errorMessage = [error localizedDescription];
+                                      errorMessage = @"Uh oh. Please, try again.";
+                                  }
+                                  UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Log In Error"
+                                                                                  message:errorMessage
+                                                                                 delegate:nil
+                                                                        cancelButtonTitle:nil
+                                                                        otherButtonTitles:@"Dismiss", nil];
+                                  [alert show];
+                                  handler(NO);
+                              } else {
+                                  SHARED_CONTROLLER.isAuthFBAlready=YES;
+//                                  if (user.isNew) {
+//                                      isReg=YES;
+//                                  } else {
+//                                      NSLog(@"User with facebook logged in!");
+//                                  }
+                                  
+                                  [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"fb_login"];
+                                  [[NSUserDefaults standardUserDefaults] synchronize];
+                                  
+                                  if (user) {
+//                                      [DATA_SERVICE getUserById:user.objectId block:^(User *user, NSError *error) {
+//                                          if (user) {
+//                                              [DATA_SERVICE chatConnect:nil];
+//                                              [DATA_SERVICE saveUserLocation];
+                                      SEND_NOTIF(kCheckUser, nil);
+//                                              Installation *currentInstallation = [Installation currentInstallation];
+//                                              if (!currentInstallation.userId || ![currentInstallation.userId isEqualToString:USER_DATA.ID]) {
+//                                                  currentInstallation.userId = SHARED_CONTROLLER.user.objectId;
+//                                                  [currentInstallation saveInBackground];
+//                                              }
+//                                          }
+                                      [SHARED_CONTROLLER checkNotifications];
+//                                          [self _loadDataforReg:isReg WithSuccess:^(BOOL isSuccess) {
+//                                              handler(isSuccess);
+//                                          }];
+//                                      }];
+                                  } else {
+                                      [SHARED_CONTROLLER handleError:error];
+                                  }
+                              }
+                              NSLog(@"userData ==== %li, email === %@", (long)user.ID, user.email);
+                          }];
+                          NSLog(@"fetched user: %@", result);
+                      }
+                  }];
+             }
+             NSLog(@"Logged in");
+         }
+     }];
+/*        [PFFacebookUtils logInInBackgroundWithReadPermissions:permissionsArray block:^(PFUser *user, NSError *error) {
+=======
+        NSArray *permissionsArray = @[@"user_about_me", @"user_birthday", @"email"];
+    FBSDKLoginManager *login = [[FBSDKLoginManager alloc] init];
+    [login logOut];
+        [PFFacebookUtils logInInBackgroundWithReadPermissions:permissionsArray block:^(PFUser *user, NSError *error) {
+>>>>>>> efb076b968923dab720dff64cfc24f380aa7c4a7
+            if (error) {
+//                if (error.code == 304) {
+//                    handler(YES);
+//                    return;
+//                }
+                handler(NO);
+                return;
+            }
+            BOOL isReg = NO;
+            if (!user) {
+                NSString *errorMessage = nil;
+                if (!error) {
+                    NSLog(@"Uh oh. The user cancelled the Facebook login.");
+                    errorMessage = @"Uh oh. The user cancelled the Facebook login.";
+                } else {
+                    NSLog(@"Uh oh. An error occurred: %@", error);
+                    errorMessage = [error localizedDescription];
+                    errorMessage = @"Uh oh. Please, try again.";
+                }
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Log In Error"
+                                                                message:errorMessage
+                                                               delegate:nil
+                                                      cancelButtonTitle:nil
+                                                      otherButtonTitles:@"Dismiss", nil];
+                [alert show];
+                handler(NO);
+            } else {
+                SHARED_CONTROLLER.isAuthFBAlready=YES;
+                if (user.isNew) {
+                    isReg=YES;
+                } else {
+                    NSLog(@"User with facebook logged in!");
+                }
+                
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"fb_login"];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+                
+                if (user) {
+                    [DATA_SERVICE getUserById:user.objectId block:^(User *user, NSError *error) {
+                        if (user) {
+                            [DATA_SERVICE chatConnect:nil];
+                            [DATA_SERVICE saveUserLocation];
+                            SHARED_CONTROLLER.user = user;
+                            SET_CURRENT_ROLE(user.currentRole);
+                            SEND_NOTIF(kCheckUser, nil);
+                            [DATA_SERVICE saveLoginTimestampForUser:user];
+                            
+                            Installation *currentInstallation = [Installation currentInstallation];
+                            if (!currentInstallation.userId || ![currentInstallation.userId isEqualToString:SHARED_CONTROLLER.user.objectId]) {
+                                currentInstallation.userId = SHARED_CONTROLLER.user.objectId;
+                                [currentInstallation saveInBackground];
+                            }
+                            
+                            if (![SHARED_CONTROLLER.user.deviceId isEqualToString:currentInstallation.deviceToken] && ![currentInstallation.deviceToken isEqualToString:@""] && currentInstallation.deviceToken)
+                            {
+                                SHARED_CONTROLLER.user.deviceId = currentInstallation.deviceToken;
+                                [SHARED_CONTROLLER.user saveInBackground];
+                            }
+                            
+                            City *city = SHARED_CONTROLLER.city;
+                            if ( ![user.city.objectId isEqualToString:city.objectId] ) {
+                                user.city = city;
+                                [user saveInBackground];
+                            }
+                            //HACK: turn on by default
+                            if ( !user.helpful ) {
+                                user.helpful = YES;
+                                [user saveInBackground];
+                            }
+                        }
+                        [SHARED_CONTROLLER checkNotifications];
+                        [self _loadDataforReg:isReg WithSuccess:^(BOOL isSuccess) {
+                                     handler(isSuccess);
+                        }];
+                    }];
+                } else {
+                    [SHARED_CONTROLLER handleError:error];
+                }
+            }
+        }];*/
+//    }
+
+}
+- (void)_loadDataforReg:(BOOL)forReg WithSuccess:(void (^)  (BOOL isSuccess))handler {
+//    FBRequest *request = [FBRequest requestForMe];
+//    [FBSDKAccessToken currentAccessToken];
+    FBSDKGraphRequest *requestMe = [[FBSDKGraphRequest alloc] initWithGraphPath:@"me" parameters:nil];
+    
+    [requestMe startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
+        if (!error) {
+//            User* user = (User*)[PFUser currentUser];
+            
+            User *user  = SHARED_CONTROLLER.user;
+            
+            Installation *currentInstallation = [Installation currentInstallation];
+            if (!currentInstallation.userId || ![currentInstallation.userId isEqualToString:SHARED_CONTROLLER.user.objectId]) {
+                currentInstallation.userId = SHARED_CONTROLLER.user.objectId;
+                [currentInstallation saveInBackground];
+            }
+            if (![SHARED_CONTROLLER.user.deviceId isEqualToString:currentInstallation.deviceToken] && ![currentInstallation.deviceToken isEqualToString:@""] && currentInstallation.deviceToken) {
+                SHARED_CONTROLLER.user.deviceId = currentInstallation.deviceToken;
+                [SHARED_CONTROLLER.user saveInBackground];
+            }
+            NSDictionary *userData = (NSDictionary *)result;
+            user.linkPhotos = userData[@"link"];
+            NSString *email = userData[@"email"];
+            NSString *facebookID = userData[@"id"];
+            NSMutableArray* arrUsers = [NSMutableArray array];
+            [DATA_SERVICE getUserByEmail:email ? email : userData[@"id"] block:^(NSArray *objects, NSError *error) {
+                NSLog(@"users %@",objects);
+                [arrUsers addObjectsFromArray:objects];
+                BOOL itsOK=YES;
+                BOOL isTempUserName=NO;
+                if ([arrUsers count]>0) //такой юзер уже есть в БАЗЕ
+                {
+                    User* tempUser = (User*)[arrUsers objectAtIndex:0];
+					 NSString*FaceBookIDUser = @"0";
+                    NSLog(@"tempUser.authData %@",tempUser.authData);
+                    if ([tempUser.authData isKindOfClass:[NSDictionary class]]) {
+                        NSDictionary* fbData = [tempUser.authData objectForKey:@"facebook"];
+                        FaceBookIDUser= [NSString stringWithFormat:@"%@",[fbData objectForKey:@"id"]];
+                    }
+
+                    if ([FaceBookIDUser isEqualToString:facebookID]) //этот юзер регался через ФБ
+                    {
+                        itsOK=YES;
+                    } else//этот юзер регался старым способом
+                    {
+                        
+                        NSString* tempUsername = tempUser.username?:user.username;
+                        
+                        user.password = tempUser.password?:user.password;
+                        user.firstName = tempUser.firstName?:user.firstName;
+                        user.lastName = tempUser.lastName?:user.lastName;
+                        user.showFirstName = tempUser.showFirstName?:user.showFirstName?:0;
+                        user.showLastName = tempUser.showLastName?:user.showLastName?:0;
+                        user.showLogin = tempUser.showLogin?:user.showLogin?:0;
+//                        user.authData = tempUser.authData?:user.authData;
+                        user.phone = tempUser.phone?:user.phone;
+                        user.birthDate = tempUser.birthDate?:user.birthDate;
+                        user.helpful = tempUser.helpful?:user.helpful?:0;
+                        user.platform = tempUser.platform?:user.platform;
+                        user.version = tempUser.version?:user.version;
+                        user.selfie = tempUser.selfie?:user.selfie;
+                        user.agencies = tempUser.agencies?:user.agencies;
+                        user.linkPortfolio = tempUser.linkPortfolio?:user.linkPortfolio;
+                        user.linkModels = tempUser.linkModels?:user.linkModels;
+                        user.avatar = tempUser.avatar?:user.avatar;
+                        user.city = tempUser.city?:user.city;
+                        user.country = tempUser.country?:user.country;
+                        user.passportPhoto = tempUser.passportPhoto?:user.passportPhoto;
+                        user.photos = tempUser.photos?:user.photos;
+                        user.upTo = tempUser.upTo?:user.upTo;
+                        user.location = user.location?:tempUser.location;
+                        user.currentRole = tempUser.currentRole;
+                        user.currentRole.accessLevel = tempUser.currentRole.accessLevel;
+
+                        [user saveInBackground];
+                        
+                        NSDictionary *params = [NSDictionary dictionaryWithObject:tempUser.objectId forKey:@"userID"];
+                        NSError *error;
+                        
+                        [PFCloud callFunction:@"deleteUserWithoutCheck" withParameters:params error:&error];
+                        
+                        if (error) {
+                            NSLog(@"%@",error);
+                        }else{
+                            isTempUserName = YES;
+                            user.username = tempUsername;
+                        }
+                        itsOK = YES;
+                    }
+
+                } else {
+                    
+                    itsOK=YES;
+                }
+                if ((itsOK)&&(forReg || user.avatar == nil)) //для решения конфликта с сохранением фото
+                {
+                    if (forReg) {
+                        user.showLogin=NO;
+                        user.showFirstName=YES;
+                        user.showLastName=YES;
+
+                    }
+                    NSString* first = [NSString stringWithFormat:@"%@",userData[@"first_name"]];
+
+
+                    if ([first rangeOfString:@"null"].location == NSNotFound) {
+                        user.firstName = user.firstName?:first;
+                    } else {
+
+                    }
+
+                    NSString* sec = [NSString stringWithFormat:@"%@",userData[@"last_name"]];
+                    if ([sec rangeOfString:@"null"].location == NSNotFound) {
+                        user.lastName = user.lastName?: sec;
+                    } else {
+
+                    }
+                    NSString* nick=isTempUserName? user.username : userData[@"name"];
+                        [DATA_SERVICE searchUsersWithNick:nick block:^(NSArray *objects, NSError *error) {
+
+                            if ([objects count]<1) {
+                                user.username = nick;
+                            } else {
+								if (forReg)
+                                {
+                                    user.username = [NSString stringWithFormat:@"%@%d",nick,arc4random()%1000];
+                                }
+                            }
+                            user.email = email;
+                            NSString *birthday = userData[@"birthday"];
+                            NSDate*  birthDate =nil;
+                            NSDateFormatter *inFormat = [[NSDateFormatter alloc] init];
+                            [inFormat setDateFormat:@"MM/dd/yyyy"];
+                            birthDate = [inFormat dateFromString:birthday];
+                            if (birthDate)
+                            {
+                                user.birthDate = user.birthDate?: birthDate;
+                            }
+
+                            NSURL *pictureURL = [NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large&return_ssl_resources=1", facebookID]];
+                            {
+                                NSString* fileName = [NSString stringWithFormat:@"%@.png", [self GetUUID]];
+                                UIImage * avaImage = [UIImage imageWithData:[NSData dataWithContentsOfURL:pictureURL]];
+                                UIImage *scaledImage;
+                                UIGraphicsBeginImageContext(CGSizeMake(170, 170*avaImage.size.height/avaImage.size.width));
+                                [avaImage drawInRect:CGRectMake(0, 0, 170, 170*avaImage.size.height/avaImage.size.width)];
+                                scaledImage = UIGraphicsGetImageFromCurrentImageContext();
+                                UIGraphicsEndImageContext();
+
+                                NSData *imageData = UIImageJPEGRepresentation(scaledImage, 5);
+                                PFFile *imageFile = [PFFile fileWithName:fileName data:imageData];
+                                [imageFile save];
+                                user.avatar = imageFile;
+                            }
+                            
+                            [user saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                                NSLog(@"saveInBackgroundWithBlock error %@",error);
+                            }];
+                        }];
+                }
+
+                handler(itsOK);
+                if (forReg) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"SetDataNotification" object:nil userInfo:@{@"lastname":userData[@"last_name"] ? userData[@"last_name"]:@"", @"firstname":userData[@"first_name"]?userData[@"first_name"]:@"", @"phone":userData[@"phone"]?userData[@"phone"]:@""}];
+                }
+            }
+             ];
+            
+        }
+    }];
+}
+- (NSString *)GetUUID
+{
+    CFUUIDRef theUUID = CFUUIDCreate(NULL);
+    CFStringRef string = CFUUIDCreateString(NULL, theUUID);
+    CFRelease(theUUID);
+    return (__bridge NSString *)string;
+}
+
+@end

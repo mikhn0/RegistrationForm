@@ -1,0 +1,21 @@
+//
+//  SelectAgencyViewController.h
+//  ModelAlliance
+//
+//  Created by Imac on 28.08.15.
+//  Copyright (c) 2015 Mac. All rights reserved.
+//
+
+#import "MyController.h"
+
+@interface SelectAgencyViewController : MyTableViewController
+
+@property (nonatomic) NSString *selectedAgency;
+@property (nonatomic) NSString *selectedCity;
+<<<<<<< HEAD
+@property (nonatomic) NSInteger selectedAgencyId;
+=======
+@property (nonatomic) Agency *selectedAgencyClass;
+>>>>>>> efb076b968923dab720dff64cfc24f380aa7c4a7
+
+@end
